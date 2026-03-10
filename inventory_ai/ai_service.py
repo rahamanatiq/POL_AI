@@ -398,12 +398,11 @@ class QueryBuilder:
         elif intent == 'product_search':
             search_term = keywords.get('search_term', '')
             if not search_term:
-                # Try to find a product name in the query
                 # Remove common question words
                 cleaned = re.sub(
                     r'\b(tell|me|about|information|on|details?|of|for|'
                     r'search|find|product|look|up|the|what|is|are|can|you)\b',
-                    '', query_lower := ''
+                    '', query.lower()
                 ).strip()
                 search_term = cleaned if cleaned else ''
 
