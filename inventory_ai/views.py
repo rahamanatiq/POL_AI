@@ -118,4 +118,33 @@ class AIChatView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  ENDPOINT 2: Conversation History
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+class AIConversationHistoryView(ListAPIView):
+    """
+    GET /api/ai/history/
+
+    Returns the last 50 conversation entries with Lilian.
+    Supports query parameter filtering:
+        ?intent=expired_products  → filter by intent
+        ?limit=20                 → limit results
+    """
+    permission_classes = [AllowAny]
+    serializer_class = AIConversationLogSerializer
+
+    def get_queryset(self):
+        qs = AIConversationLog.objects.all()
+
+        intent = self.request.query_params.get('intent')
+        if intent:
+            qs = qs.filter(intent_detected=intent)
+
+        limit = self.request.query_params.get('limit', 50)
+        try:
+            limit = int(limit)
+        except ValueError:
+            limit = 50
+
+        return qs[:limit]
