@@ -28,7 +28,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     # Local Apps
-    'inventory_ai.apps.InventoryAiConfig',
+    'pol_ai.apps.PolAiConfig',
 ]
 
 MIDDLEWARE = [

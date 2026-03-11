@@ -21,23 +21,53 @@ This guide provides step-by-step instructions on how to test the Lilian AI endpo
 - **Body:** (Select **raw** and **JSON**)
   ```json
   {
-      "query": "What products are expired?"
+      "query": "Which products expire before June 2025 and are Petroleum?"
   }
   ```
-- **Other queries to try:**
-  - `"query": "Give me an inventory overview"`
-  - `"query": "What expires next month?"`
-  - `"query": "How many healthy products do we have?"`
-  - `"query": "What can you do?"`
-- **Expected Status:** `200 OK` (It will return the `message`, `data` list, and `intent`).
+- **Other queries to try (to test LLM Text-to-SQL logic):**
+  - `"query": "How many total products do we have across all brands?"`
+  - `"query": "List all products from Global Fuels Ltd."`
+  - `"query": "Are there any items that have a usage rate of 500Liters?"`
+  - `"query": "Group my products by their status and give me the count for each."`
+- **Expected Status:** `200 OK` (It will return the conversational `message` and raw `data` list).
 
 ---
 
-## 2. Conversation History
-*Fetches the log of past questions asked to Lilian and her responses.*
+## 2. Marketplace Chat (Marie)
+*This endpoint manages chat specifically for buying and selling products on the Marketplace page.*
+
+**(A) Initial Welcome Message**
+*Call this when the chatbox opens, before the user types anything.*
+- **Method:** `GET`
+- **URL:** `http://127.0.0.1:8000/api/ai/marketplace-chat/`
+- **Expected Status:** `200 OK` (It will return her predefined introduction message).
+
+**(B) Asking Questions**
+- **Method:** `POST`
+- **URL:** `http://127.0.0.1:8000/api/ai/marketplace-chat/`
+- **Headers:** 
+  - `Content-Type`: `application/json`
+- **Body:** (Select **raw** and **JSON**)
+  ```json
+  {
+      "query": "Is there any Aviation fuel available?"
+  }
+  ```
+- **Other queries to try:**
+  - `"query": "List all the oils you have for sale"`
+  - `"query": "Where is the Industrial Solvent located?"`
+  - `"query": "What is the cheapest product you have?"`
+- **Expected Status:** `200 OK` (It will return Marie's message and the raw product data).
+
+---
+
+## 3. Conversation History
+*Fetches the log of past questions asked to the AIs and their responses.*
 
 - **Method:** `GET`
-- **URL:** `http://127.0.0.1:8000/api/ai/history/`
+- **URLs:** 
+  - `http://127.0.0.1:8000/api/ai/history/lilian/` (For main inventory chat)
+  - `http://127.0.0.1:8000/api/ai/history/marie/` (For marketplace chat)
 - **Headers:** None required
 - **Body:** None
 - **Query Parameters (Optional):**

@@ -76,7 +76,7 @@ In `pol_tracking/settings.py`:
 INSTALLED_APPS = [
     # ... existing apps
     'rest_framework',
-    'inventory_ai',
+    'pol_ai',
 ]
 ```
 
@@ -89,14 +89,14 @@ from django.urls import path, include
 
 urlpatterns = [
     # ... existing URLs
-    path('api/ai/', include('inventory_ai.urls')),
+    path('api/ai/', include('pol_ai.urls')),
 ]
 ```
 
 ### 3.4 Run Migrations
 
 ```bash
-python manage.py makemigrations inventory_ai
+python manage.py makemigrations pol_ai
 python manage.py migrate
 ```
 

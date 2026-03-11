@@ -12,15 +12,19 @@ URL Structure:
 from django.urls import path
 from .views import (
     AIChatView,
+    MarketplaceChatView,
     AIConversationHistoryView,
 )
 
-app_name = 'inventory_ai'
+app_name = 'pol_ai'
 
 urlpatterns = [
     # Primary chat endpoint — the frontend chatbox hits this
     path('chat/', AIChatView.as_view(), name='ai-chat'),
 
+    # Marketplace chat endpoint — Marie AI
+    path('marketplace-chat/', MarketplaceChatView.as_view(), name='marketplace-chat'),
+
     # Conversation log
-    path('history/', AIConversationHistoryView.as_view(), name='ai-history'),
+    path('history/<str:assistant>/', AIConversationHistoryView.as_view(), name='ai-history'),
 ]

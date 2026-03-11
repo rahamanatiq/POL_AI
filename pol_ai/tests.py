@@ -2,7 +2,7 @@
 tests.py - Test Suite for Lilian AI
 ======================================
 Tests the intent classification, entity extraction, and API endpoints.
-Run with: python manage.py test inventory_ai
+Run with: python manage.py test pol_ai
 """
 
 from django.test import TestCase, Client

@@ -1,13 +1,11 @@
 """
-models.py - Inventory Data Model
-=================================
-This model represents the inventory items shown in the frontend table.
-Fields are derived from the screenshot columns:
-Brand, Part Number, Type, Usage Rate, Batch Number, Shelf Life, Expiry, Company, Status
+models.py - Database Architecture for POL AI Tracking
+======================================================
+This file defines the SQL tables where we store product and marketplace data.
+The Gemini AI directly reads these schemas to learn how to search for information.
 
-NOTE: If the backend already has this model, you do NOT need to duplicate it.
-      Instead, import it from the backend app. This file is provided as reference
-      so the AI service knows the exact schema.
+InventoryItem -> Used by Lilian AI (Internal Inventory)
+MarketplaceItem -> Used by Marie AI (External Selling/Buying)
 """
 
 from django.db import models
@@ -123,6 +121,37 @@ class InventoryItem(models.Model):
         return self.status
 
 
+class MarketplaceItem(models.Model):
+    """
+    Represents an item listed on the marketplace for buying or selling.
+    """
+    CATEGORY_CHOICES = [
+        ('petroleum', 'Petroleum'),
+        ('oil', 'Oil'),
+        ('lubricant', 'Lubricant'),
+        ('other', 'Other'),
+    ]
+
+    TRANSACTION_CHOICES = [
+        ('sell', 'Sell Only'),
+        ('buy', 'Buy Only'),
+    ]
+
+    product_name = models.CharField(max_length=255)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    quantity = models.CharField(max_length=100)
+    price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
+    location = models.CharField(max_length=255)
+    inventory_details = models.TextField()
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_CHOICES, default='sell')
+    status = models.CharField(max_length=20, default='Active')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.product_name} - {self.price_per_unit}"
+
 class AIConversationLog(models.Model):
     """
     Stores conversation history between users and Lilian AI.
@@ -134,6 +163,11 @@ class AIConversationLog(models.Model):
         max_length=100,
         blank=True,
         help_text="The intent category detected by the AI"
+    )
+    assistant_name = models.CharField(
+        max_length=50,
+        default='lilian',
+        help_text="Which AI assistant handled this query (e.g., 'lilian' or 'marie')"
     )
     created_at = models.DateTimeField(auto_now_add=True)
 

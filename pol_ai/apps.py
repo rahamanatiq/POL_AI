@@ -5,7 +5,7 @@ apps.py - App Configuration
 from django.apps import AppConfig
 
 
-class InventoryAiConfig(AppConfig):
+class PolAiConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'inventory_ai'
+    name = 'pol_ai'
     verbose_name = 'Lilian AI - Inventory Intelligence'
