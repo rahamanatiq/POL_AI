@@ -5,7 +5,7 @@ Handles validation of incoming requests and formatting of outgoing responses.
 """
 
 from rest_framework import serializers
-from .models import InventoryItem, AIConversationLog
+from .models import InventoryItem, AIConversationLog, SupportTicket
 
 
 class InventoryItemSerializer(serializers.ModelSerializer):
@@ -73,3 +73,21 @@ class AIConversationLogSerializer(serializers.ModelSerializer):
         model = AIConversationLog
         fields = ['id', 'user_query', 'ai_response', 'intent_detected', 'created_at']
         read_only_fields = ['id', 'created_at']
+
+
+class SupportTicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SupportTicket
+        fields = [
+            'id', 'ticket_id', 'name', 'email', 'description',
+            'status', 'admin_notes', 'created_at', 'updated_at',
+        ]
+        read_only_fields = [
+            'id', 'ticket_id', 'status', 'admin_notes', 'created_at', 'updated_at'
+        ]
+
+
+class TicketStatusUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SupportTicket
+        fields = ['status', 'admin_notes']

@@ -76,6 +76,44 @@ This guide provides step-by-step instructions on how to test the Lilian AI endpo
 
 ---
 
+## 4. Support Ticket System
+*A Jira-inspired internal support ticketing system for users and admins.*
+
+**(A) Submit a Ticket (Public)**
+- **Method:** `POST`
+- **URL:** `http://127.0.0.1:8000/api/ai/tickets/`
+- **Body:** (Select **raw** and **JSON**)
+  ```json
+  {
+      "name": "John Doe",
+      "email": "john@example.com",
+      "description": "I am experiencing delays when searching for lubricants."
+  }
+  ```
+- **Expected Status:** `201 Created`
+
+**(B) List or Fetch Tickets (Admin)**
+- **Method:** `GET`
+- **URL (List):** `http://127.0.0.1:8000/api/ai/tickets/admin/`
+- **URL (Detail):** `http://127.0.0.1:8000/api/ai/tickets/admin/<ticket_id>/` (e.g., `TKT-0001`)
+- **Query Parameters (for List only):**
+  - `status`: `open` (optional)
+- **Expected Status:** `200 OK`
+
+**(C) Update Ticket Status (Admin)**
+- **Method:** `PATCH`
+- **URL:** `http://127.0.0.1:8000/api/ai/tickets/admin/<ticket_id>/` (e.g., `TKT-0001`)
+- **Body:** (Select **raw** and **JSON**)
+  ```json
+  {
+      "status": "resolved",
+      "admin_notes": "Issue fixed by optimizing the search query."
+  }
+  ```
+- **Expected Status:** `200 OK`
+
+---
+
 ### Troubleshooting
 - **404 Not Found:** Make sure you include the trailing slash `/` at the end of the URL depending on your Django settings (e.g., `/api/ai/chat/` not `/api/ai/chat`).
 - **500 Server Error:** Check your terminal where `runserver` is running to see the Python error traceback.

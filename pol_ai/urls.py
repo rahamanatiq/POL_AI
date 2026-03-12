@@ -14,6 +14,8 @@ from .views import (
     AIChatView,
     MarketplaceChatView,
     AIConversationHistoryView,
+    SupportTicketCreateView,
+    AdminTicketView,
 )
 
 app_name = 'pol_ai'
@@ -27,4 +29,9 @@ urlpatterns = [
 
     # Conversation log
     path('history/<str:assistant>/', AIConversationHistoryView.as_view(), name='ai-history'),
+
+    # Support Tickets
+    path('tickets/', SupportTicketCreateView.as_view(), name='ticket-create'),
+    path('tickets/admin/', AdminTicketView.as_view(), name='ticket-admin-list'),
+    path('tickets/admin/<str:ticket_id>/', AdminTicketView.as_view(), name='ticket-admin-detail'),
 ]

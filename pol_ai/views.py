@@ -17,6 +17,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle, ScopedRateThrottle
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
@@ -25,8 +26,10 @@ from .serializers import (
     AIQuerySerializer,
     AIResponseSerializer,
     AIConversationLogSerializer,
+    SupportTicketSerializer,
+    TicketStatusUpdateSerializer,
 )
-from .models import AIConversationLog, InventoryItem
+from .models import AIConversationLog, InventoryItem, SupportTicket
 
 from datetime import date, timedelta
 from django.db.models import Q
@@ -63,6 +66,8 @@ class AIChatView(APIView):
         }
     """
     permission_classes = [AllowAny]  # Change to [IsAuthenticated] in production
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'ai_chat'
 
     def post(self, request):
         # Step 1: Validate the request
@@ -132,6 +137,8 @@ class MarketplaceChatView(APIView):
     The endpoint for interacting with Marie AI on the marketplace.
     """
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'ai_chat'
 
     def get(self, request):
         """Returns Marie's initial greeting before any conversation starts."""
@@ -228,3 +235,65 @@ class AIConversationHistoryView(ListAPIView):
             limit = 50
 
         return qs[:limit]
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class SupportTicketCreateView(APIView):
+    """
+    POST /api/ai/tickets/
+    Public-facing. Users submit issues from the Contact Me form.
+    """
+    permission_classes = [AllowAny]
+    throttle_classes = [AnonRateThrottle]
+
+    def post(self, request):
+        serializer = SupportTicketSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({'success': False, 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        ticket = serializer.save()
+        return Response({
+            'success': True,
+            'message': f'Ticket submitted successfully. Your reference ID is {ticket.ticket_id}.',
+            'ticket_id': ticket.ticket_id,
+            'data': SupportTicketSerializer(ticket).data,
+        }, status=status.HTTP_201_CREATED)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class AdminTicketView(APIView):
+    """
+    GET   /api/ai/tickets/admin/           → List all tickets (filter by ?status= ?priority= ?category=)
+    PATCH /api/ai/tickets/admin/<id>/      → Update status and admin notes
+    """
+    permission_classes = [AllowAny]  # Change to IsAdminUser in production
+
+    def get(self, request, ticket_id=None):
+        if ticket_id:
+            try:
+                ticket = SupportTicket.objects.get(ticket_id=ticket_id)
+                return Response({'success': True, 'data': SupportTicketSerializer(ticket).data})
+            except SupportTicket.DoesNotExist:
+                return Response({'success': False, 'error': 'Ticket not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        qs = SupportTicket.objects.all()
+        if request.query_params.get('status'):
+            qs = qs.filter(status=request.query_params.get('status'))
+        serializer = SupportTicketSerializer(qs, many=True)
+        return Response({'success': True, 'count': qs.count(), 'data': serializer.data})
+
+    def patch(self, request, ticket_id=None):
+        try:
+            # Note: We now look up by the public ticket_id string (e.g. 'TKT-0001')
+            ticket = SupportTicket.objects.get(ticket_id=ticket_id)
+        except SupportTicket.DoesNotExist:
+            return Response({'success': False, 'error': 'Ticket not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = TicketStatusUpdateSerializer(ticket, data=request.data, partial=True)
+        if not serializer.is_valid():
+            return Response({'success': False, 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return Response({
+            'success': True,
+            'message': f'Ticket {ticket.ticket_id} updated.',
+            'data': SupportTicketSerializer(ticket).data,
+        })

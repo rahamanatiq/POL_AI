@@ -31,6 +31,19 @@ INSTALLED_APPS = [
     'pol_ai.apps.PolAiConfig',
 ]
 
+# Django REST Framework Configuration
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',   # Strict for anonymous users
+        'user': '1000/day',  # Higher for authenticated users
+        'ai_chat': '10/minute', # Burst protection for AI endpoints
+    }
+}
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

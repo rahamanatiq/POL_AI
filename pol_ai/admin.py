@@ -5,7 +5,7 @@ Registers models in the admin panel for easy management and debugging.
 """
 
 from django.contrib import admin
-from .models import InventoryItem, AIConversationLog
+from .models import InventoryItem, AIConversationLog, SupportTicket
 
 
 @admin.register(InventoryItem)
@@ -31,3 +31,13 @@ class AIConversationLogAdmin(admin.ModelAdmin):
     def user_query_short(self, obj):
         return obj.user_query[:80] + '...' if len(obj.user_query) > 80 else obj.user_query
     user_query_short.short_description = 'User Query'
+
+
+@admin.register(SupportTicket)
+class SupportTicketAdmin(admin.ModelAdmin):
+    list_display = ['ticket_id', 'name', 'email', 'status', 'created_at']
+    list_filter = ['status']
+    search_fields = ['ticket_id', 'name', 'email']
+    list_editable = ['status']
+    readonly_fields = ['ticket_id', 'created_at', 'updated_at']
+    ordering = ['-created_at']
