@@ -75,6 +75,22 @@ This guide provides step-by-step instructions on how to test the Lilian AI endpo
 - **Expected Status:** `200 OK`
 
 ---
+ 
+### 3. RAG Chat — Lilian AI (Semantic-Augmented Queries)
+*The advanced RAG endpoint using FAISS for semantic similarity.*
+- **Method:** `POST`
+- **URL:** `http://127.0.0.1:8000/api/ai/rag-chat/`
+- **Headers:** 
+  - `Content-Type`: `application/json`
+- **Body:** (Select **raw** and **JSON**)
+  ```json
+  {
+      "query": "I need products related to fuel maintenance."
+  }
+  ```
+- **Expected Status:** `200 OK`
+ 
+---
 
 ## 4. Support Ticket System
 *A Jira-inspired internal support ticketing system for users and admins.*

@@ -16,6 +16,7 @@ from .views import (
     AIConversationHistoryView,
     SupportTicketCreateView,
     AdminTicketView,
+    RAGChatView,
 )
 
 app_name = 'pol_ai'
@@ -23,6 +24,9 @@ app_name = 'pol_ai'
 urlpatterns = [
     # Primary chat endpoint — the frontend chatbox hits this
     path('chat/', AIChatView.as_view(), name='ai-chat'),
+
+    # RAG Chat endpoint — The advanced semantic search
+    path('rag-chat/', RAGChatView.as_view(), name='rag-chat'),
 
     # Marketplace chat endpoint — Marie AI
     path('marketplace-chat/', MarketplaceChatView.as_view(), name='marketplace-chat'),

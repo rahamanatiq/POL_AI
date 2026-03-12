@@ -20,6 +20,12 @@ from datetime import date
 from django.db import connection
 from google import genai
 from google.genai import types
+import numpy as np
+
+try:
+    import faiss
+except ImportError:
+    faiss = None
 
 class SchemaBuilder:
     @staticmethod
@@ -408,6 +414,239 @@ Based on the Total Items Found and the Sample Data, provide a STRUCTURED and CLE
         except Exception as e:
             return {
                 "message": f"I encountered an error connecting to my Gemini AI brain: {str(e)}",
+                "data": [],
+                "intent": "error"
+            }
+
+class RAGService:
+    """
+    RAGService handles queries using Retrieval-Augmented Generation.
+    It retrieves relevant context from the database and uses it to augment the AI prompt.
+    This is less rigid than Text-to-SQL and better for fuzzy or descriptive queries.
+    """
+    @classmethod
+    def ask(cls, user_query: str) -> dict:
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            return {"message": "API Key missing.", "data": [], "intent": "error"}
+
+        client = genai.Client(api_key=api_key)
+        
+        try:
+            # 1. RETRIEVAL (The "R" in RAG)
+            # In a production system, you'd use a Vector DB (Chroma, Pinecone).
+            # For this implementation, we use a broad keyword search to pull relevant context.
+            keywords = user_query.split()
+            query_filter = Q()
+            for kw in keywords:
+                if len(kw) > 2:
+                    query_filter |= Q(brand__icontains=kw) | Q(type__icontains=kw) | Q(company__icontains=kw)
+            
+            # Fetch top 10 relevant items
+            from .models import InventoryItem
+            items = InventoryItem.objects.filter(query_filter)[:10]
+            
+            # If keyword search fails, fall back to recent items to provide some context
+            if not items.exists():
+                items = InventoryItem.objects.all().order_by('-created_at')[:5]
+
+            # 2. AUGMENTATION (The "A" in RAG)
+            context_data = []
+            for item in items:
+                context_data.append({
+                    "brand": item.brand,
+                    "type": item.type,
+                    "status": item.status,
+                    "expiry_date": str(item.expiry_date),
+                    "company": item.company
+                })
+
+            context_text = json.dumps(context_data, indent=2)
+
+            # 3. GENERATION (The "G" in RAG)
+            prompt = f"""
+You are an Inventory AI using RAG (Retrieval-Augmented Generation).
+Use the provided DATABASE CONTEXT to answer the user's question. 
+
+DATABASE CONTEXT:
+{context_text}
+
+USER QUESTION: "{user_query}"
+
+INSTRUCTIONS:
+- Answer ONLY based on the context provided above.
+- If the answer isn't in the context, say "I don't have enough information in my current retrieval set to answer that accurately."
+- Be helpful and concise.
+"""
+            response = client.models.generate_content(
+                model='gemini-2.0-flash', # Using 2.0-flash for speed/efficiency
+                contents=prompt,
+            )
+
+            return {
+                "message": response.text.strip(),
+                "data": context_data,
+                "intent": "rag_query"
+            }
+
+        except Exception as e:
+            return {
+                "message": f"RAG Error: {str(e)}",
+                "data": [],
+                "intent": "error"
+            }
+
+class FaissManager:
+    """
+    Manages the FAISS vector index and metadata for semantic search.
+    """
+    INDEX_FILE = "vector_index.faiss"
+    METADATA_FILE = "vector_metadata.json"
+
+    @classmethod
+    def get_client(cls):
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            return None
+        return genai.Client(api_key=api_key)
+
+    @classmethod
+    def generate_embeddings(cls, texts):
+        client = cls.get_client()
+        if not client:
+            return None
+        
+        # Use Gemini Embedding API
+        response = client.models.embed_content(
+            model='gemini-embedding-001',
+            contents=texts,
+            config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
+        )
+        return [item.values for item in response.embeddings]
+
+    @classmethod
+    def sync_index(cls):
+        """Forces a rebuild of the FAISS index from the database."""
+        from .models import InventoryItem
+        items = InventoryItem.objects.all()
+        if not items.exists():
+            return "No items to index."
+
+        # 1. Prepare texts for embedding
+        texts = []
+        metadata = []
+        for item in items:
+            text = f"Brand: {item.brand}, Type: {item.type}, Company: {item.company}, Status: {item.status}, Part: {item.part_number}"
+            texts.append(text)
+            metadata.append({
+                "id": item.id,
+                "brand": item.brand,
+                "type": item.type,
+                "company": item.company,
+                "status": item.status,
+                "expiry_date": str(item.expiry_date)
+            })
+
+        # 2. Get embeddings
+        embeddings = cls.generate_embeddings(texts)
+        if not embeddings:
+            return "Failed to generate embeddings."
+
+        # 3. Build FAISS index
+        dimension = len(embeddings[0])
+        index = faiss.IndexFlatL2(dimension)
+        index.add(np.array(embeddings).astype('float32'))
+
+        # 4. Save index and metadata
+        faiss.write_index(index, cls.INDEX_FILE)
+        with open(cls.METADATA_FILE, 'w') as f:
+            json.dump(metadata, f)
+
+        return f"Successfully indexed {len(texts)} items."
+
+    @classmethod
+    def search(cls, query, k=5):
+        """Searches the FAISS index for the top k similar items."""
+        if not os.path.exists(cls.INDEX_FILE) or not os.path.exists(cls.METADATA_FILE):
+            return []
+
+        client = cls.get_client()
+        if not client:
+            return []
+
+        # 1. Embed the query
+        query_embedding = client.models.embed_content(
+            model='gemini-embedding-001',
+            contents=[query],
+            config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY")
+        ).embeddings[0].values
+
+        # 2. Search FAISS
+        index = faiss.read_index(cls.INDEX_FILE)
+        D, I = index.search(np.array([query_embedding]).astype('float32'), k)
+
+        # 3. Load Metadata
+        with open(cls.METADATA_FILE, 'r') as f:
+            metadata = json.load(f)
+
+        results = []
+        for idx in I[0]:
+            if idx != -1 and idx < len(metadata):
+                results.append(metadata[idx])
+        
+        return results
+
+class FaissRAGService:
+    """
+    RAGService using FAISS for semantic similarity search.
+    """
+    @classmethod
+    def ask(cls, user_query: str) -> dict:
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            return {"message": "API Key missing.", "data": [], "intent": "error"}
+
+        client = genai.Client(api_key=api_key)
+
+        try:
+            # 1. SEMANTIC RETRIEVAL via FAISS
+            context_data = FaissManager.search(user_query, k=10)
+            
+            if not context_data:
+                # Fallback to keyword search if FAISS index is empty
+                return RAGService.ask(user_query)
+
+            context_text = json.dumps(context_data, indent=2)
+
+            # 2. AUGMENTED GENERATION
+            prompt = f"""
+You are an Inventory AI using FAISS Semantic RAG.
+Use the provided SEMANTIC CONTEXT to answer the user's question.
+
+SEMANTIC CONTEXT (Most relevant items):
+{context_text}
+
+USER QUESTION: "{user_query}"
+
+INSTRUCTIONS:
+- Answer ONLY based on the semantic context provided.
+- If the answer isn't in the context, say "I couldn't find semantically similar items to answer that."
+- Mention that you are using Semantic Search in your response.
+"""
+            response = client.models.generate_content(
+                model='gemini-2.0-flash',
+                contents=prompt,
+            )
+
+            return {
+                "message": response.text.strip(),
+                "data": context_data,
+                "intent": "faiss_rag_query"
+            }
+
+        except Exception as e:
+            return {
+                "message": f"FAISS RAG Error: {str(e)}",
                 "data": [],
                 "intent": "error"
             }

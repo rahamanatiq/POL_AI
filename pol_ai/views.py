@@ -21,7 +21,7 @@ from rest_framework.throttling import AnonRateThrottle, UserRateThrottle, Scoped
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
-from .ai_service import LilianAI, MarieAI
+from .ai_service import LilianAI, MarieAI, RAGService, FaissRAGService
 from .serializers import (
     AIQuerySerializer,
     AIResponseSerializer,
@@ -123,6 +123,49 @@ class AIChatView(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  ENDPOINT 1.5: RAG Chat API (Semantic Retrieval-Augmented)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@method_decorator(csrf_exempt, name='dispatch')
+class RAGChatView(APIView):
+    """
+    POST /api/ai/rag-chat/
+
+    The primary RAG endpoint using FAISS for semantic similarity.
+    This provides 'fuzzy' intelligence based on meaning rather than just exact keywords.
+    """
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'ai_chat'
+
+    def post(self, request):
+        serializer = AIQuerySerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({'success': False, 'error': 'Invalid request', 'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        query = serializer.validated_data['query']
+
+        try:
+            # Use the advanced FAISS Semantic Service
+            ai_response = FaissRAGService.ask(query)
+            
+            # Log the conversation (using assistant_name='lilian_rag')
+            AIConversationLog.objects.create(
+                user_query=query,
+                ai_response=ai_response['message'],
+                intent_detected=ai_response['intent'],
+                assistant_name='lilian_rag',
+            )
+
+            return Response({'success': True, **ai_response}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'success': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  ENDPOINT 2: Marketplace Chat API (Marie)
