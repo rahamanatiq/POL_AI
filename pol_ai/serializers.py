@@ -80,7 +80,7 @@ class SupportTicketSerializer(serializers.ModelSerializer):
         model = SupportTicket
         fields = [
             'id', 'ticket_id', 'name', 'email', 'description',
-            'status', 'admin_notes', 'created_at', 'updated_at',
+            'status', 'admin_notes', 'action_taken', 'created_at', 'updated_at',
         ]
         read_only_fields = [
             'id', 'ticket_id', 'status', 'admin_notes', 'created_at', 'updated_at'
@@ -90,4 +90,4 @@ class SupportTicketSerializer(serializers.ModelSerializer):
 class TicketStatusUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = SupportTicket
-        fields = ['status', 'admin_notes']
+        fields = ['status', 'admin_notes', 'action_taken']
