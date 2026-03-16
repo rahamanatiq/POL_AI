@@ -11,53 +11,53 @@ This guide provides step-by-step instructions on how to test the Lilian AI endpo
 
 ---
 
-## 1. Main AI Chat
-*This is the core endpoint where your frontend will send natural language text questions.*
+### 🚀 API Endpoints Quick Reference
+Here are all the endpoints available in the system, grouped together for easy access:
+
+| Feature | Method | URL |
+| :--- | :--- | :--- |
+| **1. Lilian AI Chat (RAG)**      | `POST` | `http://127.0.0.1:8000/api/ai/chat/` |
+| **2. Marie AI Chat (RAG)**       | `GET` / `POST` | `http://127.0.0.1:8000/api/ai/marketplace-chat/` |
+| **3. Lilian Chat History**       | `GET`  | `http://127.0.0.1:8000/api/ai/history/lilian_rag/` |
+| **4. Marie Chat History**        | `GET`  | `http://127.0.0.1:8000/api/ai/history/marie_faiss/` |
+| **5. Submit Support Ticket**     | `POST` | `http://127.0.0.1:8000/api/ai/tickets/` |
+| **6. Admin Ticket List**         | `GET`  | `http://127.0.0.1:8000/api/ai/tickets/admin/` |
+| **7. Admin Ticket Detail/Update**| `GET` / `PATCH`| `http://127.0.0.1:8000/api/ai/tickets/admin/<ticket_id>/` |
+
+---
+
+## 1. Lilian AI Chat (FAISS RAG Powered)
+*The main endpoint for inventory queries. Now exclusively uses FAISS for semantic similarity search.*
 
 - **Method:** `POST`
 - **URL:** `http://127.0.0.1:8000/api/ai/chat/`
 - **Headers:** 
   - `Content-Type`: `application/json`
-- **Body:** (Select **raw** and **JSON**)
+- **Body:** 
   ```json
   {
-      "query": "Which products expire before June 2025 and are Petroleum?"
+      "query": "I need products related to fuel maintenance."
   }
   ```
-- **Other queries to try (to test LLM Text-to-SQL logic):**
-  - `"query": "How many total products do we have across all brands?"`
-  - `"query": "List all products from Global Fuels Ltd."`
-  - `"query": "Are there any items that have a usage rate of 500Liters?"`
-  - `"query": "Group my products by their status and give me the count for each."`
-- **Expected Status:** `200 OK` (It will return the conversational `message` and raw `data` list).
 
 ---
 
-## 2. Marketplace Chat (Marie)
-*This endpoint manages chat specifically for buying and selling products on the Marketplace page.*
+## 2. Marketplace Chat (Marie) - FAISS RAG Powered
+*The main endpoint for marketplace discovery. Now exclusively uses FAISS for semantic similarity search.*
 
 **(A) Initial Welcome Message**
-*Call this when the chatbox opens, before the user types anything.*
 - **Method:** `GET`
 - **URL:** `http://127.0.0.1:8000/api/ai/marketplace-chat/`
-- **Expected Status:** `200 OK` (It will return her predefined introduction message).
 
-**(B) Asking Questions**
+**(B) Semantic Product Discovery**
 - **Method:** `POST`
 - **URL:** `http://127.0.0.1:8000/api/ai/marketplace-chat/`
-- **Headers:** 
-  - `Content-Type`: `application/json`
-- **Body:** (Select **raw** and **JSON**)
+- **Body:** 
   ```json
   {
-      "query": "Is there any Aviation fuel available?"
+      "query": "Is there any Aviation fuel available for purchase?"
   }
   ```
-- **Other queries to try:**
-  - `"query": "List all the oils you have for sale"`
-  - `"query": "Where is the Industrial Solvent located?"`
-  - `"query": "What is the cheapest product you have?"`
-- **Expected Status:** `200 OK` (It will return Marie's message and the raw product data).
 
 ---
 
@@ -75,20 +75,6 @@ This guide provides step-by-step instructions on how to test the Lilian AI endpo
 - **Expected Status:** `200 OK`
 
 ---
- 
-### 3. RAG Chat — Lilian AI (Semantic-Augmented Queries)
-*The advanced RAG endpoint using FAISS for semantic similarity.*
-- **Method:** `POST`
-- **URL:** `http://127.0.0.1:8000/api/ai/rag-chat/`
-- **Headers:** 
-  - `Content-Type`: `application/json`
-- **Body:** (Select **raw** and **JSON**)
-  ```json
-  {
-      "query": "I need products related to fuel maintenance."
-  }
-  ```
-- **Expected Status:** `200 OK`
  
 ---
 

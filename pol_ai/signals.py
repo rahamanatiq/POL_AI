@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from .models import InventoryItem
+from .models import InventoryItem, MarketplaceItem
 from .ai_service import FaissManager
 import logging
 

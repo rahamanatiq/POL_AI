@@ -1,0 +1,22 @@
+{
+  "lilian": [
+    {
+      "user": "My favorite product is Aviation Fuel",
+      "ai": "OK. Here is the information on Aviation Fuel:\n\n*   Aviation Fuel (AF - JetA) from AeroGas Ltd, expiry date: 2026-09-28"
+    },
+    {
+      "user": "What did I just say my favorite product was?",
+      "ai": "Aviation Fuel"
+    }
+  ],
+  "marie": [
+    {
+      "user": "I am looking for Aviation Fuel.",
+      "ai": "Okay, I can help with that. Here are the listings for Aviation Fuel:\n\n*   **Premium Aviation Fuel Jet-A:** 5000 Gal available at $2.15 per unit in Hangar 4 - West Coast.\n*   **Standard Jet Fuel:** 2000 Gal available at $2.5 per unit in Texas AFB."
+    },
+    {
+      "user": "What fuel was I looking for?",
+      "ai": "Based on our conversation, you were looking for Aviation Fuel."
+    }
+  ]
+}

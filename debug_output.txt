@@ -1,0 +1,144 @@
+﻿--- PROMPT START ---
+
+You are Marie, a friendly and experienced Marketplace Assistant.
+Your core goal is to help users find products for sale or analyze marketplace data using the SEMANTIC CONTEXT provided below.
+
+SEMANTIC CONTEXT (Most relevant marketplace items):
+[
+  {
+    "id": 16,
+    "product_name": "Transmission Fluid",
+    "category": "lubricant",
+    "quantity": "100 Gallons",
+    "price_per_unit": 11.0,
+    "location": "Base D",
+    "transaction_type": "buy",
+    "status": "Active",
+    "inventory_details": "Looking for any brand of transmission fluid under $12."
+  },
+  {
+    "id": 14,
+    "product_name": "Transmission Fluid X",
+    "category": "lubricant",
+    "quantity": "150 Gallons",
+    "price_per_unit": 12.5,
+    "location": "Storage A",
+    "transaction_type": "sell",
+    "status": "Active",
+    "inventory_details": "Unopened containers. Expiry 2027."
+  },
+  {
+    "id": 15,
+    "product_name": "Hydraulic Fluid",
+    "category": "oil",
+    "quantity": "10 Barrels",
+    "price_per_unit": 130.0,
+    "location": "Base C",
+    "transaction_type": "buy",
+    "status": "Active",
+    "inventory_details": "Need standard hydraulic fluid quickly."
+  },
+  {
+    "id": 12,
+    "product_name": "Premium Hydraulic Fluid",
+    "category": "oil",
+    "quantity": "20 Barrels",
+    "price_per_unit": 180.0,
+    "location": "Storage A",
+    "transaction_type": "sell",
+    "status": "Active",
+    "inventory_details": "High grade, temperature resistant."
+  },
+  {
+    "id": 11,
+    "product_name": "Hydraulic Fluid Drum",
+    "category": "oil",
+    "quantity": "50 Barrels",
+    "price_per_unit": 120.0,
+    "location": "Storage B",
+    "transaction_type": "sell",
+    "status": "Active",
+    "inventory_details": "Unopened drums, expiry 2026."
+  },
+  {
+    "id": 13,
+    "product_name": "Used Engine Oil",
+    "category": "lubricant",
+    "quantity": "200 Liters",
+    "price_per_unit": 0.5,
+    "location": "Maintenance Bay",
+    "transaction_type": "sell",
+    "status": "Active",
+    "inventory_details": "Requires filtration. Available for immediate pickup."
+  },
+  {
+    "id": 10,
+    "product_name": "Bulk Diesel",
+    "category": "petroleum",
+    "quantity": "15000 Gal",
+    "price_per_unit": 3.0,
+    "location": "East Coast Depot",
+    "transaction_type": "buy",
+    "status": "Active",
+    "inventory_details": "Looking for the cheapest bulk diesel supplier."
+  },
+  {
+    "id": 18,
+    "product_name": "Antifreeze Bulk",
+    "category": "other",
+    "quantity": "500 Gallons",
+    "price_per_unit": 5.0,
+    "location": "North Wing",
+    "transaction_type": "sell",
+    "status": "Active",
+    "inventory_details": "Winter overstock."
+  },
+  {
+    "id": 9,
+    "product_name": "Aviation Fuel Jet-A",
+    "category": "petroleum",
+    "quantity": "4000 Gal",
+    "price_per_unit": 2.2,
+    "location": "Nevada Base",
+    "transaction_type": "buy",
+    "status": "Active",
+    "inventory_details": "Need Jet-A by next month. Willing to pay up to 2.20/gal."
+  },
+  {
+    "id": 7,
+    "product_name": "Standard Jet Fuel",
+    "category": "petroleum",
+    "quantity": "2000 Gal",
+    "price_per_unit": 2.5,
+    "location": "Texas AFB",
+    "transaction_type": "sell",
+    "status": "Active",
+    "inventory_details": "Standard overstock."
+  }
+]
+
+RECENT CONVERSATION HISTORY:
+No recent history.
+
+
+USER QUESTION: "i want to buy Transmission Fluid. give me best seller"
+
+INSTRUCTIONS:
+- If the user is just saying hello or asking a general greeting, you can respond politely without using the context.
+- Answer the user's question directly based on the SEMANTIC CONTEXT provided. Be smart about Recognizing synonyms (e.g. "jet fuel" = "aviation fuel") and correcting typos.
+- CRITICAL MARKETPLACE LOGIC:
+  * If the user says "I want to BUY" or "Looking for", you MUST find listings in the context where `Type` is "sell" (these are the sellers).
+  * If the user says "I want to SELL" or "Offering", you MUST find listings in the context where `Type` is "buy" (these are the buyers).
+- MATHEMATICAL COMPARISON:
+  * If the user asks for the "best", "cheapest", "lowest price", or "best seller", do NOT look for these words in the text.
+  * Instead, look at the `price_per_unit` numbers of all valid matches in the context and identify which one has the lowest number.
+  * Explicitly state the price and seller details for the best option found.
+- If the user asks a yes/no question (e.g., "is there any X"), confirm if it exists in the valid context and provide a brief description.
+- If the context does not contain what the user asked for (even considering synonyms), gracefully inform them that no matching buyers/sellers were found for that specific request.
+- STRICTLY do not volunteer extra information not asked for.
+- Do NOT mention that you are using Semantic Search or any underlying search technology.
+
+--- PROMPT END ---
+
+--- RESPONSE ---
+I can help with that! The best seller of Transmission Fluid is "Transmission Fluid X". They are selling it for $12.5 per gallon at Storage A.

@@ -5,7 +5,8 @@ Maps API endpoints to their view handlers.
 
 URL Structure:
 ──────────────
-/api/ai/chat/            → POST  → Main Lilian AI chat
+/api/ai/chat/            → POST  → Main Lilian AI (FAISS RAG Powered)
+/api/ai/marketplace-chat/ → POST  → Main Marie AI (FAISS RAG Powered)
 /api/ai/history/         → GET   → Conversation history
 """
 
@@ -16,19 +17,13 @@ from .views import (
     AIConversationHistoryView,
     SupportTicketCreateView,
     AdminTicketView,
-    RAGChatView,
 )
 
 app_name = 'pol_ai'
 
 urlpatterns = [
-    # Primary chat endpoint — the frontend chatbox hits this
+    # Primary chat endpoints (FAISS RAG Powered)
     path('chat/', AIChatView.as_view(), name='ai-chat'),
-
-    # RAG Chat endpoint — The advanced semantic search
-    path('rag-chat/', RAGChatView.as_view(), name='rag-chat'),
-
-    # Marketplace chat endpoint — Marie AI
     path('marketplace-chat/', MarketplaceChatView.as_view(), name='marketplace-chat'),
 
     # Conversation log

@@ -21,7 +21,7 @@ from rest_framework.throttling import AnonRateThrottle, UserRateThrottle, Scoped
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
-from .ai_service import LilianAI, MarieAI, RAGService, FaissRAGService
+from .ai_service import RAGService, FaissRAGService, MarketplaceFaissRAGService
 from .serializers import (
     AIQuerySerializer,
     AIResponseSerializer,
@@ -85,18 +85,18 @@ class AIChatView(APIView):
         query = serializer.validated_data['query']
 
         try:
-            # Step 2: Process query through Lilian AI
-            ai_response = LilianAI.ask(query)
+            # Step 2: Process query through Lilian FAISS RAG
+            ai_response = FaissRAGService.ask(query)
 
-            # Step 3: Log the conversation
+            # Step 3: Log the conversation (using lilian_rag for historical consistency)
             AIConversationLog.objects.create(
                 user_query=query,
                 ai_response=ai_response['message'],
                 intent_detected=ai_response['intent'],
-                assistant_name='lilian',
+                assistant_name='lilian_rag',
             )
 
-            # Step 4: Serialize dates in data (convert date objects to strings)
+            # Step 4: Serialize dates in data
             data = ai_response.get('data')
             if isinstance(data, list):
                 for item in data:
@@ -124,45 +124,6 @@ class AIChatView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  ENDPOINT 1.5: RAG Chat API (Semantic Retrieval-Augmented)
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-@method_decorator(csrf_exempt, name='dispatch')
-class RAGChatView(APIView):
-    """
-    POST /api/ai/rag-chat/
-
-    The primary RAG endpoint using FAISS for semantic similarity.
-    This provides 'fuzzy' intelligence based on meaning rather than just exact keywords.
-    """
-    permission_classes = [AllowAny]
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'ai_chat'
-
-    def post(self, request):
-        serializer = AIQuerySerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response({'success': False, 'error': 'Invalid request', 'details': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-        query = serializer.validated_data['query']
-
-        try:
-            # Use the advanced FAISS Semantic Service
-            ai_response = FaissRAGService.ask(query)
-            
-            # Log the conversation (using assistant_name='lilian_rag')
-            AIConversationLog.objects.create(
-                user_query=query,
-                ai_response=ai_response['message'],
-                intent_detected=ai_response['intent'],
-                assistant_name='lilian_rag',
-            )
-
-            return Response({'success': True, **ai_response}, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response({'success': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
@@ -208,18 +169,18 @@ class MarketplaceChatView(APIView):
         query = serializer.validated_data['query']
 
         try:
-            # Step 2: Process query through Marie AI
-            ai_response = MarieAI.ask(query)
+            # Step 2: Process query through Marie FAISS RAG
+            ai_response = MarketplaceFaissRAGService.ask(query)
 
-            # Step 3: Log the conversation (reusing the same log model)
+            # Step 3: Log the conversation
             AIConversationLog.objects.create(
                 user_query=query,
                 ai_response=ai_response['message'],
                 intent_detected=ai_response['intent'],
-                assistant_name='marie',
+                assistant_name='marie_faiss',
             )
 
-            # Step 4: Serialize dates in data (convert date objects to strings) if needed
+            # Step 4: Serialize dates
             data = ai_response.get('data')
             if isinstance(data, list):
                 for item in data:
@@ -246,6 +207,7 @@ class MarketplaceChatView(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  ENDPOINT 3: Conversation History
